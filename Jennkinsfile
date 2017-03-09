@@ -1,0 +1,34 @@
+node {
+   def mvnHome
+   stage('Preparation') { // for display purposes
+      // Get some code from a GitHub repository
+      git 'https://github.com/mattiasmgn/cctst.git'
+      // Get the Maven tool.
+      // ** NOTE: This 'M3' Maven tool must be configured
+      // **       in the global configuration.
+      mvnHome = tool 'M3'
+   }
+   stage('Build') {
+      // Run the maven build
+      if (isUnix()) {
+         sh "'${mvnHome}/bin/mvn' -Dmaven.test.failure.ignore clean package"
+      } else {
+         bat(/"${mvnHome}\bin\mvn" -Dmaven.test.failure.ignore clean package/)
+      }
+   }
+
+   stage('postbuild'){
+       currentdir = pwd()
+       echo "current dir=${currentdir} "
+
+    sh "cp  /opt/cuc/Example/target/cucumber.xml  ${currentdir}/target/surefire-reports/TEST-oj.xml"
+
+   }
+   stage('Results') {
+       currentdir = pwd()
+        echo "current dir=${currentdir} "
+        sh "ls ${currentdir}/target/surefire-reports/*.xml"
+      junit 'target/surefire-reports/*.xml'
+      //archive 'target/*.jar'
+   }
+}
